@@ -2,6 +2,24 @@
 #include <iostream>
 #include <random>
 
+int prime_number ( int n ){
+	int total = 0;
+	for (int i = 2; i <= n; i++ ){
+		int prime = 1;
+		for (int j = 2; j < i; j++ ){
+			if ( i % j == 0 ){
+				prime = 0;
+				break;
+			}
+		}
+		total = total + prime;
+	}
+
+    std::cout << "Total: " << total << "recebido: " << n << std::endl;
+
+	return total;
+}
+
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
 
@@ -13,9 +31,9 @@ int main(int argc, char **argv) {
     const int emitter_rank = 0;
     const int collector_rank = size - 1;
 
-    if (size != 12) {
+    if (size < 7) {
         if (rank == 0) {
-            std::cerr << "Este programa requer 12 processos." << std::endl;
+            std::cerr << "Este programa requer 7 processos." << std::endl;
         }
         MPI_Finalize();
         return 1;
@@ -52,7 +70,7 @@ int main(int argc, char **argv) {
             total_data += received_data;
         }
 
-        std::cout << "Total recebido coletor: " << total_data << std::endl;
+       // std::cout << "Total recebido coletor: " << total_data << std::endl;
 
     } else {
         // Trabalhadores recebem mensagens do emissor
@@ -60,16 +78,20 @@ int main(int argc, char **argv) {
         MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
         
         int received_data;
+        int returned_number;
         MPI_Status status;
         MPI_Recv(&received_data, 1, MPI_INT, emitter_rank, 0, MPI_COMM_WORLD, &status);
 
         // Trabalho realizado pelos trabalhadores
-        received_data *= 2;
+       // received_data *= 2;
 
-        std::cout << "Trabalhador: " << myrank << ", Valor: " << received_data << std::endl;
+        returned_number = prime_number(received_data);
+
+
+        //std::cout << "Trabalhador: " << myrank << ", Valor: " << returned_number << std::endl;
 
         // Trabalhadores enviam dados para o coletor
-        MPI_Send(&received_data, 1, MPI_INT, collector_rank, 0, MPI_COMM_WORLD);
+        MPI_Send(&returned_number, 1, MPI_INT, collector_rank, 0, MPI_COMM_WORLD);
     }
 
     MPI_Finalize();

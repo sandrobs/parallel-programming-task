@@ -1,6 +1,7 @@
 #include <mpi.h>
 #include <iostream>
 #include <random>
+#include <chrono>
 
 int prime_number ( int n ){
 	int total = 0;
@@ -15,7 +16,7 @@ int prime_number ( int n ){
 		total = total + prime;
 	}
 
-    std::cout << "Total: " << total << "recebido: " << n << std::endl;
+    std::cout << "Total: " << total << " recebido: " << n << std::endl;
 
 	return total;
 }
@@ -45,7 +46,13 @@ int main(int argc, char **argv) {
     // Crie uma distribuição uniforme entre 1 e 10
     std::uniform_int_distribution<> dis(1, 10);
 
+    double t_start = MPI_Wtime();
+
     if (rank == emitter_rank) {
+
+        //auto *t_start = std::chrono::high_resolution_clock::now();
+        
+        MPI_Send(&t_start, 1, MPI_DOUBLE, collector_rank, 0, MPI_COMM_WORLD);
 
         for (int dest = 1; dest < size-1; ++dest)
         {
@@ -64,6 +71,8 @@ int main(int argc, char **argv) {
         int received_data;
         MPI_Status status;
 
+        MPI_Recv(&t_start, 1, MPI_DOUBLE, emitter_rank, 0, MPI_COMM_WORLD, &status);
+
         for (int worker = 1; worker < size-1; ++worker)
         {
             MPI_Recv(&received_data, 1, MPI_INT, worker, 0, MPI_COMM_WORLD, &status);
@@ -71,6 +80,9 @@ int main(int argc, char **argv) {
         }
 
        // std::cout << "Total recebido coletor: " << total_data << std::endl;
+        double t_end = MPI_Wtime();
+
+        std::cout << "Execution time(s): " << (t_end-t_start) << std::endl;
 
     } else {
         // Trabalhadores recebem mensagens do emissor
@@ -95,5 +107,6 @@ int main(int argc, char **argv) {
     }
 
     MPI_Finalize();
+
     return 0;
 }

@@ -32,3 +32,4 @@
 *.app
 tests/exe
 .vscode/settings.json
+exe

@@ -16,7 +16,7 @@ int prime_number ( int n ){
 		total = total + prime;
 	}
 
-    //std::cout << "Total: " << total << " recebido: " << n << std::endl;
+    std::cout << "Total: " << total << " recebido: " << n << std::endl;
 
 	return total;
 }
@@ -40,22 +40,6 @@ std::vector<int> get_int_collection(){
 
 }
 
-void getJobsPerWorker(int totalJobs, int totalWorkers, int rank, int& inicio, int& quantidade) {
-    int jobsPorWorker = totalJobs / totalWorkers;
-    int jobsExtras = totalJobs % totalWorkers; // Jobs que serão distribuídos a workers adicionais
-
-    // Calculando a quantidade de jobs que este worker receberá
-    if (rank < jobsExtras) {
-        // Os primeiros workers receberão um job extra
-        quantidade = jobsPorWorker + 1;
-        inicio = rank * quantidade;
-    } else {
-        // Workers posteriores receberão apenas a quantidade padrão de jobs
-        quantidade = jobsPorWorker;
-        inicio = jobsPorWorker * jobsExtras + (rank - jobsExtras) * quantidade;
-    }
-}
-
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
 
@@ -67,7 +51,6 @@ int main(int argc, char **argv) {
     const int emitter_rank = 0;
     const int collector_rank = size - 1;
     const int qtd_workes = size - 2;
-    const int qtd_jobs = 10;
 
     if (size < 3) {
         if (rank == 0) {
@@ -83,13 +66,12 @@ int main(int argc, char **argv) {
         
         std::vector<int> int_collection = get_int_collection();
 
+        MPI_Send(&t_start, 1, MPI_DOUBLE, collector_rank, 0, MPI_COMM_WORLD);
+
         int batch_processed = 0;
         int dest_worker = 1;
         int collection_size = int_collection.size();
         int tag = 1;
-
-        MPI_Send(&t_start, 1, MPI_DOUBLE, collector_rank, 0, MPI_COMM_WORLD);
-        
         for (int index = 0; index < collection_size; ++index) {
 
             int number = int_collection[index];
@@ -101,7 +83,7 @@ int main(int argc, char **argv) {
             }
 
             MPI_Send(&number, 1, MPI_INT, dest_worker, tag, MPI_COMM_WORLD);
-            //std::cout << "Emissor: Trabalhador " << dest_worker << ", Valor: " << number << std::endl;
+            std::cout << "Emissor: Trabalhador " << dest_worker << ", Valor: " << number << std::endl;
 
             batch_processed++;
             dest_worker++;
@@ -116,11 +98,11 @@ int main(int argc, char **argv) {
 
         MPI_Recv(&t_start, 1, MPI_DOUBLE, emitter_rank, 0, MPI_COMM_WORLD, &status);
 
-        for (int job = 0; job < qtd_jobs; ++job)
+        for (int job = 0; job < 10; ++job)
         {
             MPI_Recv(&received_data, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
             total_data += received_data;
-            //std::cout << "job  " << job << " valor: " << received_data << std::endl;
+            std::cout << "job  " << job << " valor: " << received_data << std::endl;
         }
 
         std::cout << "Total recebido coletor: " << total_data << std::endl;
@@ -135,14 +117,14 @@ int main(int argc, char **argv) {
         
         int received_data;
         int returned_number;
+        //int num_jobs = 10;
         MPI_Status status;
         //bool recebeu_valor = true;
         int tag = 0;
 
-        int inicio, quantidade;
-        getJobsPerWorker(qtd_jobs, qtd_workes, rank-1, inicio, quantidade);
-
-        int t = 1;
+        //sao 10 jobs
+        //o worker pode receber N jobs qtd_workes
+      int t = 0;
         do
         {
             
@@ -152,15 +134,24 @@ int main(int argc, char **argv) {
 
 
             std::cout << "worker " << myrank << " received_data: " << received_data << " tag " << tag << std::endl;
-        
+
+
+           /* if (received_data == 0 || received_data == null)
+            {
+                
+            }*/
+            
+
             returned_number = prime_number(received_data);
 
             // Trabalhadores enviam dados para o coletor
             MPI_Send(&returned_number, 1, MPI_INT, collector_rank, 0, MPI_COMM_WORLD);
             t++;
             
-        } while (t <= quantidade);
-         
+        } while (t < 12);
+        
+
+        
     }
 
     MPI_Finalize();

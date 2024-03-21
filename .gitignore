@@ -33,3 +33,5 @@
 tests/exe
 .vscode/settings.json
 exe
+sequential
+teste

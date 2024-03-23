@@ -16,8 +16,6 @@ int prime_number ( int initial, int final ){
 		total = total + prime;
 	}
 
-    //std::cout << "Total: " << total << " recebido: " << n << std::endl;
-
 	return total;
 }
 
@@ -89,8 +87,6 @@ int main(int argc, char **argv) {
         int initial, final;
         MPI_Recv(&initial, 1, MPI_INT, emitter_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         MPI_Recv(&final, 1, MPI_INT, emitter_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-        std::cout << "WORKER " << myrank << " INITIAL: " << initial << " FINAL: " << final << std::endl;
 
         int total_periodo = prime_number(initial, final);
 
